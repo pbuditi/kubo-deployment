@@ -8,9 +8,9 @@ releases:
 - name: kubo
   version: latest
 - name: docker
-  version: 28.0.1
-  url: https://storage.googleapis.com/kubo-public/docker-28.0.1-ubuntu-trusty-3421.11-20170720-164316-303456764-20170720164324.tgz
-  sha1: 0ac80f013cc686047cdd7ccc428a8784c5e691bc
+  version: 30.1.3
+  url: https://github.com/cloudfoundry-community/docker-boshrelease/releases/download/v30.1.3/docker-30.1.3.tgz
+  sha1: bd6f68b9981453fbc72f50c15119f16663f27bad
 - name: haproxy
   version: 8.4.0
   url: https://github.com/cloudfoundry-incubator/haproxy-boshrelease/releases/download/v8.4.0/haproxy-8.4.0.tgz
@@ -109,13 +109,16 @@ instance_groups:
   - name: docker
     release: docker
     properties:
-      docker:
-        flannel: true
-        iptables: false
-        ip_masq: false
-        log_level: error
-        storage_driver: overlay
-        default_ulimits: [ "nofile=65536" ]
+      bip: 172.17.0.1/24
+      flannel: true
+      iptables: false
+      ip_masq: false
+      log_level: error
+      storage_driver: overlay
+      default_ulimits: [ "nofile=65536" ]
+      tls_cacert: ((tls-docker.ca))
+      tls_cert:  ((tls-docker.certificate))
+      tls_key: ((tls-docker.private_key))
       env: {}
   - name: kubeconfig
     release: kubo
@@ -176,3 +179,9 @@ variables:
     - kubernetes.default
     - kubernetes.default.svc
     - kubernetes.default.svc.cluster.local
+- name: tls-docker
+  type: certificate
+  options:
+    ca: kubo_ca
+    common_name: ((kubernetes_master_host))
+    alternative_names: [((kubernetes_master_host))]
