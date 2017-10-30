@@ -77,10 +77,10 @@ jobs:
         - get: bosh-deployment
         - get: bosh-release
           version:
-            version: "263"
+            version: "263.2.0"
         - get: ubuntu-trusty-stemcell
           version:
-            version: "3445.7"
+            version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -100,7 +100,7 @@ jobs:
             version: "262.4"
         - get: ubuntu-trusty-stemcell
           version:
-            version: "3421.19"
+            version: "3421.26"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -120,7 +120,7 @@ jobs:
             version: "261.5"
         - get: ubuntu-trusty-stemcell
           version:
-            version: "3363.30"
+            version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -140,7 +140,7 @@ jobs:
               version: "260.8"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3363.30"
+              version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -160,7 +160,7 @@ jobs:
               version: "257.24"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3363.30"
+              version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -180,7 +180,7 @@ jobs:
               version: "255.14"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3363.30"
+              version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -200,7 +200,7 @@ jobs:
               version: "30.5"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3363.30"
+              version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -220,7 +220,7 @@ jobs:
               version: "24.12"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3363.30"
+              version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -240,7 +240,7 @@ jobs:
               version: "13.17"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3363.30"
+              version: "3363.37"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -260,7 +260,7 @@ jobs:
               version: "41"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3421.19"
+              version: "3421.26"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -297,10 +297,50 @@ jobs:
           - get: bosh-deployment
           - get: uaa-release
             version:
-              version: "45"
+              version: "45.3"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3445.7"
+              version: "3445.11"
+      - task: export-release
+        file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
+        privileged: true
+        input_mapping:
+          stemcell: ubuntu-trusty-stemcell
+          release: uaa-release
+      - put: compiled-releases
+        params:
+          file: "compiled-release/*.tgz"
+
+  - name: compile-uaa-release-50-ubuntu-trusty-3468
+    plan:
+      - aggregate:
+          - get: bosh-deployment
+          - get: uaa-release
+            version:
+              version: "50"
+          - get: ubuntu-trusty-stemcell
+            version:
+              version: "3468"
+      - task: export-release
+        file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
+        privileged: true
+        input_mapping:
+          stemcell: ubuntu-trusty-stemcell
+          release: uaa-release
+      - put: compiled-releases
+        params:
+          file: "compiled-release/*.tgz"
+
+  - name: compile-uaa-release-52-ubuntu-trusty-3468
+    plan:
+      - aggregate:
+          - get: bosh-deployment
+          - get: uaa-release
+            version:
+              version: "52"
+          - get: ubuntu-trusty-stemcell
+            version:
+              version: "3468"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -317,7 +357,87 @@ jobs:
         - get: bosh-deployment
         - get: credhub-release
           version:
-            version: "1.2.0"
+            version: "1.3.2"
+        - get: ubuntu-trusty-stemcell
+          version:
+            version: "3445.11"
+      - task: export-release
+        file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
+        privileged: true
+        input_mapping:
+          stemcell: ubuntu-trusty-stemcell
+          release: credhub-release
+      - put: compiled-releases
+        params:
+          file: "compiled-release/*.tgz"
+
+  - name: compile-credhub-release-1.0.8-ubuntu-trusty-3421
+    plan:
+      - aggregate:
+        - get: bosh-deployment
+        - get: credhub-release
+          version:
+            version: "1.0.8"
+        - get: ubuntu-trusty-stemcell
+          version:
+            version: "3421.26"
+      - task: export-release
+        file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
+        privileged: true
+        input_mapping:
+          stemcell: ubuntu-trusty-stemcell
+          release: credhub-release
+      - put: compiled-releases
+        params:
+          file: "compiled-release/*.tgz"
+
+  - name: compile-credhub-release-1.3.4-ubuntu-trusty-3445
+    plan:
+      - aggregate:
+        - get: bosh-deployment
+        - get: credhub-release
+          version:
+            version: "1.3.4"
+        - get: ubuntu-trusty-stemcell
+          version:
+            version: "3445.11"
+      - task: export-release
+        file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
+        privileged: true
+        input_mapping:
+          stemcell: ubuntu-trusty-stemcell
+          release: credhub-release
+      - put: compiled-releases
+        params:
+          file: "compiled-release/*.tgz"
+
+  - name: compile-credhub-release-1.3.4-ubuntu-trusty-3468
+    plan:
+      - aggregate:
+        - get: bosh-deployment
+        - get: credhub-release
+          version:
+            version: "1.3.4"
+        - get: ubuntu-trusty-stemcell
+          version:
+            version: "3468"
+      - task: export-release
+        file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
+        privileged: true
+        input_mapping:
+          stemcell: ubuntu-trusty-stemcell
+          release: credhub-release
+      - put: compiled-releases
+        params:
+          file: "compiled-release/*.tgz"
+
+  - name: compile-credhub-release-1.5.0-ubuntu-trusty-3468
+    plan:
+      - aggregate:
+        - get: bosh-deployment
+        - get: credhub-release
+          version:
+            version: "1.5.0"
         - get: ubuntu-trusty-stemcell
           version:
             version: "3445.7"
@@ -340,7 +460,7 @@ jobs:
             version: "0.0.1"
         - get: ubuntu-trusty-stemcell
           version:
-            version: "3445.7"
+            version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -360,7 +480,7 @@ jobs:
             version: "0.0.4"
         - get: ubuntu-trusty-stemcell
           version:
-            version: "3445.7"
+            version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -379,10 +499,10 @@ jobs:
           - get: bosh-deployment
           - get: warden-cpi
             version:
-              version: "35"
+              version: "37"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3445.7"
+              version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -402,7 +522,7 @@ jobs:
               version: "0.342.0"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3445.7"
+              version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -422,7 +542,7 @@ jobs:
               version: "1.1.1"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3445.7"
+              version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -439,10 +559,10 @@ jobs:
           - get: bosh-deployment
           - get: garden-runc
             version:
-              version: "1.9.2"
+              version: "1.9.4"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3445.7"
+              version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true
@@ -462,7 +582,7 @@ jobs:
               version: "0.24.0"
           - get: ubuntu-trusty-stemcell
             version:
-              version: "3445.7"
+              version: "3445.11"
       - task: export-release
         file: bosh-deployment/ci/compiled-releases/tasks/export-release.yml
         privileged: true

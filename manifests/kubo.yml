@@ -1,10 +1,13 @@
 name: ((deployment_name))
 
+features:
+  use_dns_addresses: true
+
 releases:
 - name: kubo-etcd
   version: 2
-  url: https://storage.googleapis.com/kubo-public/kubo-etcd-2-ubuntu-trusty-3421.11-20170721-091603-591124789-20170721091609.tgz
-  sha1: 91f7a6592ee6c5242854f3654fe786574e816ffc
+  url: https://storage.googleapis.com/kubo-public/kubo-etcd-2-ubuntu-trusty-3445.11-20170927-150426-34307934-20170927150432.tgz
+  sha1: 90d5584a2e6dbe71b2675b6c7395bedb264969d2
 - name: kubo
   version: latest
 - name: docker
@@ -19,7 +22,7 @@ releases:
 stemcells:
 - alias: trusty
   os: ubuntu-trusty
-  version: "3421.11"
+  version: "3445.11"
 
 instance_groups:
 - name: etcd
@@ -44,6 +47,8 @@ instance_groups:
   - name: *network-name
   azs: [z1]
   jobs:
+  - name: kubo-dns-aliases
+    release: kubo
   - name: cloud-provider
     release: kubo
     properties: {}
@@ -57,12 +62,12 @@ instance_groups:
       kubelet-password: ((kubelet-password))
       backend_port: 8443 # Bosh links hack
       port: ((kubernetes_master_port))
+      authorization-mode: &authorization_mode ((authorization_mode))
       tls:
         kubernetes: ((tls-kubernetes))
   - name: kubeconfig
     release: kubo
     properties:
-      kubernetes-api-url: &kubo_url "https://((kubernetes_master_host)):((kubernetes_master_port))"
       kubelet-password: ((kubelet-password))
       tls:
         kubernetes: ((tls-kubernetes))
@@ -74,7 +79,9 @@ instance_groups:
   - name: kubernetes-system-specs
     release: kubo
     properties:
-      kubernetes-api-url: *kubo_url
+      admin-username: admin
+      admin-password: ((kubo-admin-password))
+      authorization-mode: *authorization_mode
   stemcell: trusty
   vm_type: master
 
@@ -104,6 +111,8 @@ instance_groups:
   - name: *network-name
   azs: [z1]
   jobs:
+  - name: kubo-dns-aliases
+    release: kubo
   - name: flanneld
     release: kubo
   - name: docker
@@ -123,7 +132,7 @@ instance_groups:
   - name: kubeconfig
     release: kubo
     properties:
-      kubernetes-api-url: *kubo_url
+      kubernetes-api-url: "https://((kubernetes_master_host)):((kubernetes_master_port))"
       kubelet-password: ((kubelet-password))
       tls:
         kubernetes: ((tls-kubernetes))
@@ -133,13 +142,10 @@ instance_groups:
   - name: kubelet
     release: kubo
     properties:
-      kubernetes-api-url: *kubo_url
       tls:
         kubelet: ((tls-kubelet))
   - name: kubernetes-proxy
     release: kubo
-    properties:
-      kubernetes-api-url: *kubo_url
   stemcell: trusty
   vm_type: worker
   persistent_disk_type: 10240
@@ -167,10 +173,12 @@ variables:
     ca: kubo_ca
     common_name: ((kubernetes_master_host))
     alternative_names: [((kubernetes_master_host))]
+    organization: "system:nodes"
 - name: tls-kubernetes
   type: certificate
   options:
     ca: kubo_ca
+    organization: "system:masters"
     common_name: ((kubernetes_master_host))
     alternative_names:
     - ((kubernetes_master_host))
@@ -179,9 +187,33 @@ variables:
     - kubernetes.default
     - kubernetes.default.svc
     - kubernetes.default.svc.cluster.local
+    - master.kubo
 - name: tls-docker
   type: certificate
   options:
     ca: kubo_ca
     common_name: ((kubernetes_master_host))
     alternative_names: [((kubernetes_master_host))]
+
+# This can be removed once BOSH supports variables in the runtime-config
+- name: /dns_healthcheck_tls_ca
+  type: certificate
+  options:
+    is_ca: true
+    common_name: dns-healthcheck-tls-ca
+
+- name: /dns_healthcheck_server_tls
+  type: certificate
+  options:
+    ca: /dns_healthcheck_tls_ca
+    common_name: health.bosh-dns
+    extended_key_usage:
+    - server_auth
+
+- name: /dns_healthcheck_client_tls
+  type: certificate
+  options:
+    ca: /dns_healthcheck_tls_ca
+    common_name: health.bosh-dns
+    extended_key_usage:
+    - client_auth

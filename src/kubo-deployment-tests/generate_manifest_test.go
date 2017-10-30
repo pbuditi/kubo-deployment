@@ -7,6 +7,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"io"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -47,7 +49,6 @@ var _ = Describe("Generate manifest", func() {
 		},
 			Entry("deployment name", "\nname: klingon\n"),
 			Entry("network name", "\n  networks:\n  - name: network-name\n"),
-			Entry("kubernetes API URL", "\n      kubernetes-api-url: https://a.router.name:101928\n"),
 			Entry("kubernetes external port", "\n      external_kubo_port: 101928\n"),
 			Entry("CF API URL", "\n        api_url: cf.api.url\n"),
 			Entry("CF UAA URL", "\n        uaa_url: cf.uaa.url\n"),
@@ -67,11 +68,26 @@ var _ = Describe("Generate manifest", func() {
 		},
 			Entry("deployment name", "\nname: grinder\n"),
 			Entry("network name", "\n  networks:\n  - name: network-name\n"),
-			Entry("kubernetes API URL", "\n      kubernetes-api-url: https://12\\.23\\.34\\.45:101928\n"),
 			Entry("Auto-generated kubelet password", "\n      kubelet-password: \\(\\(kubelet-password\\)\\)\n"),
 			Entry("Auto-generated admin password", "\n      admin-password: \\(\\(kubo-admin-password\\)\\)\n"),
 			Entry("worker node tag", "\n          worker-node-tag: TheDirector-grinder-worker"),
 		)
+
+		It("should always use dns addresses", func() {
+			status, err := bash.Run("main", []string{kuboEnv, "grinder", "director_uuid"})
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status).To(Equal(0))
+
+			var manifest struct {
+				Features struct {
+					UseDnsAddresses bool `yaml:"use_dns_addresses"`
+				} `yaml:"features"`
+			}
+			yaml.Unmarshal(stdout.Contents(), &manifest)
+
+			Expect(manifest.Features.UseDnsAddresses).To(BeTrue())
+		})
 
 		It("should include a variable section with tls-kubelet, tls-kubernetes", func() {
 			status, err := bash.Run("main", []string{kuboEnv, "cucumber", "director_uuid"})
@@ -79,6 +95,45 @@ var _ = Describe("Generate manifest", func() {
 			Expect(status).To(Equal(0))
 
 			Expect(stdout).To(gbytes.Say("variables:"))
+			Expect(stdout).To(gbytes.Say("tls-kubelet"))
+			Expect(stdout).To(gbytes.Say("tls-kubernetes"))
+		})
+
+		It("should include an alternative name with master.kubo for the tls-kubernetes variable", func() {
+			status, err := bash.Run("main", []string{kuboEnv, "cucumber", "director_uuid"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status).To(Equal(0))
+
+			Expect(stdout).To(gbytes.Say("variables:"))
+			Expect(stdout).To(gbytes.Say("tls-kubernetes"))
+			Expect(stdout).To(gbytes.Say("alternative_names:"))
+			Expect(stdout).To(gbytes.Say("master.kubo"))
+		})
+
+		It("should default the authorization mode property to RBAC", func() {
+			status, err := bash.Run("main", []string{kuboEnv, "cucumber", "director_uuid"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status).To(Equal(0))
+
+			Expect(stdout).To(gbytes.Say("authorization-mode: rbac"))
+		})
+
+		It("should use the abac authorization mode set in the kubo environment", func() {
+			abacEnv := filepath.Join(testEnvironmentPath, "test_gcp_abac")
+			status, err := bash.Run("main", []string{abacEnv, "cucumber", "director_uuid"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status).To(Equal(0))
+
+			Expect(stdout).To(gbytes.Say("authorization-mode: abac"))
+		})
+
+		It("should use the rbac authorization mode set in the kubo environment", func() {
+			rbacEnv := filepath.Join(testEnvironmentPath, "test_gcp_rbac")
+			status, err := bash.Run("main", []string{rbacEnv, "cucumber", "director_uuid"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(status).To(Equal(0))
+
+			Expect(stdout).To(gbytes.Say("authorization-mode: rbac"))
 		})
 
 		It("should reproduce the same manifest on the second run", func() {
@@ -231,5 +286,45 @@ var _ = Describe("Generate manifest", func() {
 			Expect(command.Run()).To(Succeed(), fmt.Sprintf("Failed with environmenrt %s", env))
 			Expect(string(errBuffer.Contents())).To(HaveLen(0))
 		}
+	})
+
+	It("should set the tls-kubernetes common_name to the kubernetes_master_host", func() {
+		command := exec.Command("./bin/generate_kubo_manifest", "src/kubo-deployment-tests/resources/environments/test_external", "name", "director_uuid")
+
+		stdoutTemp := gbytes.NewBuffer()
+		stderrTemp := gbytes.NewBuffer()
+
+		command.Stdout = io.MultiWriter(stdoutTemp, GinkgoWriter)
+		command.Stderr = io.MultiWriter(stderrTemp, GinkgoWriter)
+		command.Dir = pathFromRoot("")
+		Expect(command.Run()).To(Succeed())
+
+		command2 := exec.Command("bosh-cli", "int", "-", "--path", "/variables/name=tls-kubernetes/options/common_name")
+		command2.Stdin = stdoutTemp
+		command2.Stdout = bash.Stdout
+		command2.Stderr = bash.Stderr
+
+		Expect(command2.Run()).To(Succeed())
+		Expect(stdout).To(gbytes.Say("12.23.34.45"))
+	})
+
+	It("should add the kubernetes_master_host to tls-kubernetes alternative_names", func() {
+		command := exec.Command("./bin/generate_kubo_manifest", "src/kubo-deployment-tests/resources/environments/test_external", "name", "director_uuid")
+
+		stdoutTemp := gbytes.NewBuffer()
+		stderrTemp := gbytes.NewBuffer()
+
+		command.Stdout = io.MultiWriter(stdoutTemp, GinkgoWriter)
+		command.Stderr = io.MultiWriter(stderrTemp, GinkgoWriter)
+		command.Dir = pathFromRoot("")
+		Expect(command.Run()).To(Succeed())
+
+		command2 := exec.Command("bosh-cli", "int", "-", "--path", "/variables/name=tls-kubernetes/options/alternative_names")
+		command2.Stdin = stdoutTemp
+		command2.Stdout = bash.Stdout
+		command2.Stderr = bash.Stderr
+
+		Expect(command2.Run()).To(Succeed())
+		Expect(stdout).To(gbytes.Say("- 12.23.34.45"))
 	})
 })
