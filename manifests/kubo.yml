@@ -60,6 +60,7 @@ instance_groups:
       admin-username: admin
       admin-password: ((kubo-admin-password))
       kubelet-password: ((kubelet-password))
+      kube-proxy-password: ((kube-proxy-password))
       backend_port: 8443 # Bosh links hack
       port: ((kubernetes_master_port))
       authorization-mode: &authorization_mode ((authorization_mode))
@@ -69,6 +70,7 @@ instance_groups:
     release: kubo
     properties:
       kubelet-password: ((kubelet-password))
+      kube-proxy-password: ((kube-proxy-password))
       tls:
         kubernetes: ((tls-kubernetes))
   - name: kubernetes-controller-manager
@@ -161,6 +163,8 @@ variables:
 - name: kubo-admin-password
   type: password
 - name: kubelet-password
+  type: password
+- name: kube-proxy-password
   type: password
 - name: kubo_ca
   type: certificate
