@@ -26,7 +26,7 @@ stemcells:
 
 instance_groups:
 - name: etcd
-  instances: 3
+  instances: 1
   networks:
   - name: &network-name ((deployments_network))
   azs: [z1]
@@ -37,6 +37,8 @@ instance_groups:
       etcd:
         require_ssl: false
         peer_require_ssl: false
+      options:
+        delete_data_dir_on_stop: false
   stemcell: trusty
   vm_type: common
   persistent_disk_type: 5120
