@@ -5,9 +5,9 @@ features:
 
 releases:
 - name: kubo-etcd
-  version: 2
-  url: https://storage.googleapis.com/kubo-public/kubo-etcd-2-ubuntu-trusty-3445.11-20170927-150426-34307934-20170927150432.tgz
-  sha1: 90d5584a2e6dbe71b2675b6c7395bedb264969d2
+  version: 3
+  url: https://storage.googleapis.com/kubo-public/kubo-etcd-3-ubuntu-trusty-3445.11-20171103-154047-591171459-20171103154053.tgz
+  sha1: ee3a4e399afcc257a8c8753d9ca924e8ea381f0e
 - name: kubo
   version: latest
 - name: docker
